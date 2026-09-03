@@ -1,5 +1,6 @@
 import { createErrorBoundary, createComponent } from 'solid-js'
 import { render } from '@nativescript-community/solid-js'
+import { document } from 'dominative'
 import { RouterContextProvider, type AnyRouter } from './native-solid-router'
 import type { Component } from 'solid-js'
 import {

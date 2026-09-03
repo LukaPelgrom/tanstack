@@ -11,6 +11,9 @@ if (typeof AbortController === 'undefined') {
   (globalThis as any).AbortController = NativeScriptAbortController;
   (globalThis as any).AbortSignal = NativeScriptAbortSignal;
 }
+if (typeof globalThis.scrollTo !== 'function') {
+  ;(globalThis as any).scrollTo = () => {}
+}
 
 type RouterOptions<TRouteTree extends AnyRoute> = Parameters<typeof createRouter<TRouteTree>>[0];
 

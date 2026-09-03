@@ -157,6 +157,11 @@ if (typeof AbortController === "undefined") {
   globalThis.AbortController = NativeScriptAbortController;
   globalThis.AbortSignal = NativeScriptAbortSignal;
 }
+if (typeof globalThis.scrollTo !== "function") {
+  ;
+  globalThis.scrollTo = () => {
+  };
+}
 function createNativeScriptRouter(opts) {
   const { initialPath, ...routerOpts } = opts;
   const router = createRouter({
@@ -178,6 +183,7 @@ import { document as document2 } from "dominative";
 // src/PageRenderer.tsx
 import { createErrorBoundary, createComponent as createComponent2 } from "solid-js";
 import { render } from "@nativescript-community/solid-js";
+import { document } from "dominative";
 
 // src/native-back-sync.ts
 function getNativeBackCallbackDecision(opts) {

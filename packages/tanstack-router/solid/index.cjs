@@ -201,6 +201,11 @@ if (typeof AbortController === "undefined") {
   globalThis.AbortController = import_abortcontroller.AbortController;
   globalThis.AbortSignal = import_abortcontroller.AbortSignal;
 }
+if (typeof globalThis.scrollTo !== "function") {
+  ;
+  globalThis.scrollTo = () => {
+  };
+}
 function createNativeScriptRouter(opts) {
   const { initialPath, ...routerOpts } = opts;
   const router = createRouter({
@@ -217,11 +222,12 @@ function createNativeScriptRouter(opts) {
 // src/NativeScriptRouterProvider.tsx
 var import_solid_js4 = require("solid-js");
 var import_core2 = require("@nativescript/core");
-var import_dominative = require("dominative");
+var import_dominative2 = require("dominative");
 
 // src/PageRenderer.tsx
 var import_solid_js2 = require("solid-js");
 var import_solid_js3 = require("@nativescript-community/solid-js");
+var import_dominative = require("dominative");
 
 // src/native-back-sync.ts
 function getNativeBackCallbackDecision(opts) {
@@ -301,7 +307,7 @@ function isExpectedBackstackError(message) {
   return message.includes("Cannot read properties of undefined") || message.includes("Could not find an active match");
 }
 function renderPage(router, RouteComponent, routePath, onNativeBack, onVisiblePathChange, debug) {
-  const page = document.createElement("Page");
+  const page = import_dominative.document.createElement("Page");
   const log = createDebugLogger(debug);
   let resetErrorBoundary;
   const loggedUnexpectedErrors = /* @__PURE__ */ new Set();
@@ -854,7 +860,7 @@ function NativeScriptRouterProvider(props) {
     log("[NSRouter] draining queued native back sync. remaining:", queuedNativeBackCount);
     runNativeBackSync();
   };
-  const frameEl = import_dominative.document.createElement("frame");
+  const frameEl = import_dominative2.document.createElement("frame");
   frameRef = frameEl;
   frameEl.setAttribute("actionBarVisibility", props.actionBarVisibility || "never");
   frameEl.actionBarVisibility = props.actionBarVisibility || "never";
