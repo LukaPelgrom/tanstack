@@ -43,7 +43,6 @@
     "build": "npm run clean && npm run typecheck && tsup --config tsup.config.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepare": "npm run build:git",
     "build:git": "tsup --config tsup.config.ts"
   },
   "repository": {
@@ -80,7 +79,6 @@
     "@tanstack/history": "1.162.1",
     "@tanstack/router-core": "1.171.22",
     "@tanstack/solid-router": "2.0.0-rc.4",
-    "@types/node": "^24.0.0",
     "solid-js": ">=2.0.0-0 <3.0.0"
   },
   "devDependencies": {
@@ -89,6 +87,7 @@
     "@nativescript/types-ios": "9.1.1",
     "@tanstack/history": "1.162.1",
     "@tanstack/solid-router": "2.0.0-rc.4",
+    "@types/node": "^24.0.0",
     "dominative": "0.1.3",
     "solid-js": "2.0.0-rc.5",
     "tsup": "^8.3.5",
