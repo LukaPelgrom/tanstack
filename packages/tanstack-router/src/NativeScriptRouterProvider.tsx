@@ -1,6 +1,7 @@
-import { batch, createEffect, createMemo, createSignal, onMount, onCleanup, untrack } from 'solid-js';
-import type { AnyRouter } from '@tanstack/solid-router';
+import { runWithOwner, untrack } from 'solid-js';
+import type { AnyRouter } from './native-solid-router';
 import { Color, ShowModalOptions, Utils } from '@nativescript/core';
+import { document } from 'dominative';
 import { renderPage } from './PageRenderer';
 import { setupBackHandler } from './back-handler';
 import { doesRouteIdMatchPathname, getHistoryIndex, getNativeScriptNavigationTransition, getNavigationSignalFromRouterState, getNavigationKind, shouldSkipPathNavigation } from './navigation-state';
@@ -22,16 +23,6 @@ export interface NativeScriptRouterProviderProps {
 
 export function NativeScriptRouterProvider(props: NativeScriptRouterProviderProps) {
   const router = props.router;
-
-  // Ensure router stores are initialized — mirrors RouterContextProvider behavior.
-  // Without this call, router.stores may be undefined when Transitioner logic
-  // and useRouterState try to access it.
-  router.update({
-    ...router.options,
-    context: {
-      ...router.options.context,
-    },
-  });
 
   const log = createDebugLogger(props.debug);
   let frameRef: any;
@@ -87,15 +78,13 @@ export function NativeScriptRouterProvider(props: NativeScriptRouterProviderProp
   //  1. Synchronous startTransition (no Suspense / concurrent rendering needed)
   //  2. History subscription + router.load() — handled in onMount
   //  3. Reactive effect that flips status pending→idle when the router settles
-  router.startTransition = (fn: () => void) => {
+  router.startTransition = async (fn: () => void) => {
     fn();
+    return true;
   };
 
-  // Create a Solid signal that updates whenever the router state changes.
-  // This bypasses the __store reactive chain which depends on Suspense context.
-  const [navigationSignal, setNavigationSignal] = createSignal(
-    getNavigationSignalFromRouterState(router.state) + ':' + (router.state.location?.pathname || ''),
-  );
+  let syncNavigation = (_navigationSignal: string) => {};
+  let navigationReady = false;
 
   // Update navigation signal from router state. Includes pathname to detect
   // child route changes (e.g., /virtual → /virtual/inspector) where match IDs
@@ -106,43 +95,10 @@ export function NativeScriptRouterProvider(props: NativeScriptRouterProviderProp
     const base = getNavigationSignalFromRouterState(state);
     // Append pathname to ensure child route navigations are detected
     const next = `${base}:${pathname}`;
-    setNavigationSignal(next);
-  };
-
-  // Transitioner-equivalent: drive `status` to `idle` and update `resolvedLocation`
-  // whenever the router settles out of any pending state. Mirrors the
-  // pending→settled createRenderEffect inside @tanstack/solid-router's
-  // `<Transitioner />` (which is never mounted in NS because we render Pages
-  // through Frame.navigate() instead of inside a single Solid <Matches> tree).
-  // Uses Solid's accumulator-style effect so transitions never get lost between
-  // module load time and the first effect tick.
-  const isAnyPending = createMemo(() => {
-    const stores = (router as any).stores;
-    if (!stores) return false;
-    return Boolean(stores.isLoading?.get?.() ?? false) || Boolean(stores.hasPending?.get?.() ?? false);
-  });
-  createEffect((prevIsAnyPending: boolean = false) => {
-    const cur = isAnyPending();
-    if (prevIsAnyPending && !cur) {
-      const stores = (router as any).stores;
-      batch(() => {
-        stores.status?.set?.('idle');
-        if (stores.resolvedLocation && stores.location) {
-          stores.resolvedLocation.set(stores.location.get());
-        }
-      });
-      // Emit onResolved so subscribers (e.g. devtools, scroll restoration)
-      // observe the navigation completion the same way they do under the
-      // standard <Transitioner />.
-      try {
-        router.emit?.({ type: 'onResolved' } as any);
-      } catch {
-        // ignore — onResolved payload is purely informational for our consumers
-      }
-      updateSignal();
+    if (navigationReady) {
+      syncNavigation(next);
     }
-    return cur;
-  });
+  };
 
   const unsubLoad = router.subscribe('onLoad' as any, () => {
     updateSignal();
@@ -476,8 +432,14 @@ export function NativeScriptRouterProvider(props: NativeScriptRouterProviderProp
     runNativeBackSync();
   };
 
-  // ── Mount lifecycle (mirrors Transitioner.onMount) ──
-  onMount(() => {
+  const frameEl = document.createElement('frame') as any;
+  frameRef = frameEl;
+  frameEl.setAttribute('actionBarVisibility', props.actionBarVisibility || 'never');
+  frameEl.actionBarVisibility = props.actionBarVisibility || 'never';
+
+  // NativeScript constructs this provider outside a long-lived Solid owner.
+  // Subscribe immediately and drive Frame navigation from router events.
+  {
     // Subscribe to history changes and trigger router.load(). The
     // Transitioner-equivalent reactive effect above handles status transitions
     // (pending→idle) and signal updates once isLoading + hasPending settle, so
@@ -492,42 +454,34 @@ export function NativeScriptRouterProvider(props: NativeScriptRouterProviderProp
       }
     });
 
-    log('[NSRouter] onMount: calling router.load()');
+    log('[NSRouter] provider: scheduling router.load()');
     log('[NSRouter] latestLocation:', JSON.stringify(router.latestLocation?.pathname));
     log('[NSRouter] routeTree:', !!router.routeTree);
     log('[NSRouter] routesById keys:', Object.keys((router as any).routesById || {}));
 
-    // Set up back button handling
-    const cleanupBack = setupBackHandler(router, () => frameRef, guard);
-
-    onCleanup(() => {
-      closeModalFromRouterState();
-      unsub();
-      cleanupBack();
-      unsubLoad();
-      unsubBeforeLoad();
-    });
-  });
+    navigationReady = true;
+    updateSignal();
+    setupBackHandler(router, () => frameRef, guard);
+  }
 
   // Initial load — trigger immediately. The Transitioner-equivalent effect
   // above flips status to 'idle' and updates the signal when the load settles.
   {
     const tryLoad = async () => {
       try {
-        await router.load();
+        await runWithOwner(null, () => router.load());
         log('[NSRouter] load resolved. status:', router.state.status, 'matches:', router.state.matches.length);
+        updateSignal();
       } catch (err: any) {
         console.error('[NSRouter] load rejected:', err);
       }
     };
-    tryLoad();
+    setTimeout(tryLoad, 0);
   }
 
-  // React to match changes and navigate the Frame
-  createEffect(() => {
-    // Read reactive dependency
-    const _navigationSignal = navigationSignal();
-
+  // React to router events and navigate the Frame without relying on Solid 1
+  // owner-bound effects.
+  syncNavigation = (_navigationSignal: string) => {
     log('[NSRouter] effect fired, navigationSignal:', _navigationSignal, 'frameRef:', !!frameRef);
 
     untrack(() => {
@@ -755,10 +709,7 @@ export function NativeScriptRouterProvider(props: NativeScriptRouterProviderProp
 
       releaseGuard();
     });
-  });
+  };
 
-  const frameEl = document.createElement('frame') as any;
-  frameRef = frameEl;
-  frameEl.setAttribute('actionBarVisibility', props.actionBarVisibility || 'never');
   return frameEl;
 }

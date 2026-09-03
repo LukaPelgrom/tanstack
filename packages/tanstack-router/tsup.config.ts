@@ -1,9 +1,12 @@
 import { defineConfig } from 'tsup';
+import { fileURLToPath } from 'node:url';
+
+const packageRoot = fileURLToPath(new URL('.', import.meta.url));
 
 export default defineConfig({
   entry: {
-    index: 'packages/tanstack-router/src/index.ts',
-    'solid/index': 'packages/tanstack-router/src/solid/index.ts',
+    index: `${packageRoot}src/index.ts`,
+    'solid/index': `${packageRoot}src/solid/index.ts`,
   },
   format: ['esm', 'cjs'],
   dts: true,
@@ -11,8 +14,8 @@ export default defineConfig({
   splitting: false,
   clean: false,
   target: 'es2018',
-  outDir: 'dist/packages/tanstack-router',
-  external: ['@tanstack/solid-router', '@tanstack/history', '@nativescript/core', '@nativescript/core/abortcontroller', '@nativescript-community/solid-js', 'solid-js', 'solid-js/web', 'solid-js/jsx-runtime'],
+  outDir: packageRoot,
+  external: ['@tanstack/solid-router', '@tanstack/router-core', '@tanstack/router-core/isServer', '@tanstack/history', '@nativescript/core', '@nativescript/core/abortcontroller', '@nativescript/core/abortcontroller/index.js', '@nativescript-community/solid-js', 'dominative', 'solid-js', 'solid-js/web', 'solid-js/jsx-runtime'],
   esbuildOptions(options) {
     options.jsx = 'automatic';
     options.jsxImportSource = 'solid-js';

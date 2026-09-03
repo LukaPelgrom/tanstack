@@ -1,5 +1,5 @@
-import { createRouter, type AnyRoute } from '@tanstack/solid-router';
-import { AbortController as NativeScriptAbortController, AbortSignal as NativeScriptAbortSignal } from '@nativescript/core/abortcontroller';
+import { createRouter, type AnyRoute } from './native-solid-router';
+import { AbortController as NativeScriptAbortController, AbortSignal as NativeScriptAbortSignal } from '@nativescript/core/abortcontroller/index.js';
 import { createNativeScriptHistory } from './history';
 
 // NativeScript polyfills — TanStack Router requires these globals.

@@ -10,15 +10,15 @@ export { createNativeScriptNavigationState, createNativeScriptTransitionState } 
 export { MODAL_SEARCH_PARAM_KEY, withSingleModalPath } from '../modal-state';
 export type { NativeScriptNavigationOptions, NativeScriptNavigationState, NativeScriptNavigationTransition, NativeScriptModalDetent, NativeScriptModalIOSPresentationOptions, NativeScriptModalPresentationOptions, NativeScriptModalOptionsResolver, NativeScriptModalOptionsResolverContext } from '../types';
 
-// === Re-exports from @tanstack/solid-router ===
+// === Re-exports from the native Solid Router entrypoint ===
 // Route definition
-export { createRootRoute, createRootRouteWithContext, createRoute, createFileRoute, createLazyRoute, rootRouteId, RouteApi, getRouteApi } from '@tanstack/solid-router';
+export { createRootRoute, createRootRouteWithContext, createRoute, createFileRoute, createLazyRoute, rootRouteId, RouteApi, getRouteApi } from '../native-solid-router';
 
 // Router creation (for users who want full control over history)
-export { createRouter } from '@tanstack/solid-router';
+export { createRouter } from '../native-solid-router';
 
 // Hooks
-export { useRouter, useRouterState, useNavigate, useMatch, useMatches, useParentMatches, useChildMatches, useParams, useSearch, useLoaderData, useLoaderDeps, useLocation, useRouteContext, useMatchRoute, useBlocker, useCanGoBack } from '@tanstack/solid-router';
+export { useRouter, useRouterState, useNavigate, useMatch, useMatches, useParentMatches, useChildMatches, useParams, useSearch, useLoaderData, useLoaderDeps, useLocation, useRouteContext, useMatchRoute, useBlocker, useCanGoBack } from '../native-solid-router';
 
 // Components (that work in NativeScript context)
-export { Navigate, MatchRoute, Await } from '@tanstack/solid-router';
+export { Navigate, MatchRoute, Await } from '../native-solid-router';

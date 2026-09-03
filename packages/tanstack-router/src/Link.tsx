@@ -1,7 +1,7 @@
-import { createMemo, createRenderEffect, onCleanup, type JSX } from 'solid-js'
+import { createMemo, createRenderEffect, onCleanup } from 'solid-js'
 import { createElement, insert, setProp } from '@nativescript-community/solid-js'
-import type { AnyRouter, LinkOptions, RoutePaths } from '@tanstack/solid-router'
-import { useRouter, useMatchRoute } from '@tanstack/solid-router'
+import type { AnyRouter, LinkOptions, RoutePaths } from './native-solid-router'
+import { useRouter, useMatchRoute } from './native-solid-router'
 import type { RegisteredRouter } from './register'
 import { resolveLinkTapAction, type LinkTapResult } from './link-action'
 import { MODAL_SEARCH_PARAM_KEY, withSingleModalPath } from './modal-state'
@@ -21,7 +21,7 @@ type LinkProps<
   modalTo?: string
   fallbackTo?: LinkOptions<TRouter, TFrom, TTo, TMaskFrom, TMaskTo>['to']
   onTap?: () => LinkTapResult
-  children: JSX.Element
+  children: unknown
   class?: string
   activeClass?: string
   inactiveClass?: string
@@ -173,10 +173,13 @@ export function Link<
     contentView.removeEventListener('tap', handleTap)
   })
 
-  createRenderEffect(() => {
-    setProp(contentView, 'class', currentClass())
-    setProp(contentView, 'style', props.style)
-  })
+  createRenderEffect(
+    () => ({ className: currentClass(), style: props.style }),
+    (next) => {
+      setProp(contentView, 'class', next.className)
+      setProp(contentView, 'style', next.style)
+    },
+  )
 
   insert(contentView, props.children as any)
 
