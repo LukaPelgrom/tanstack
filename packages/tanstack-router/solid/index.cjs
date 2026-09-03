@@ -368,7 +368,9 @@ function renderPage(router, RouteComponent, routePath, onNativeBack, onVisiblePa
             resetErrorBoundary = reset;
             return null;
           },
-          children: (0, import_solid_js2.createComponent)(SafeRouteView, {})
+          get children() {
+            return (0, import_solid_js2.createComponent)(SafeRouteView, {});
+          }
         })
       }),
       page

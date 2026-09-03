@@ -125,7 +125,9 @@ export function renderPage(
                 resetErrorBoundary = reset
                 return null
               },
-              children: createComponent(SafeRouteView, {}),
+              get children() {
+                return createComponent(SafeRouteView, {})
+              },
             }),
         }),
       page,
