@@ -290,13 +290,6 @@ function shouldUnmountPageOnNavigatingFrom(args) {
 }
 
 // src/PageRenderer.tsx
-function ErrorBoundary(props) {
-  const content = (0, import_solid_js2.createErrorBoundary)(
-    () => props.children,
-    (error, reset) => props.fallback(error(), reset)
-  );
-  return content();
-}
 function getErrorMessage(err) {
   if (err instanceof Error) {
     return err.message;
@@ -327,8 +320,8 @@ function renderPage(router, RouteComponent, routePath, onNativeBack, onVisiblePa
       console.error("[NSRouter] Invalid RouterContextProvider export:", describeComponentShape(RouterContextProvider));
       return;
     }
-    if (typeof ErrorBoundary !== "function") {
-      console.error("[NSRouter] Invalid ErrorBoundary export:", describeComponentShape(ErrorBoundary));
+    if (typeof import_solid_js2.Errored !== "function") {
+      console.error("[NSRouter] Invalid Errored export:", describeComponentShape(import_solid_js2.Errored));
       return;
     }
     const SafeRouteView = () => {
@@ -358,8 +351,9 @@ function renderPage(router, RouteComponent, routePath, onNativeBack, onVisiblePa
     dispose = (0, import_solid_js3.render)(
       () => (0, import_solid_js2.createComponent)(RouterContextProvider, {
         router,
-        children: () => (0, import_solid_js2.createComponent)(ErrorBoundary, {
-          fallback: (err, reset) => {
+        children: () => (0, import_solid_js2.createComponent)(import_solid_js2.Errored, {
+          fallback: (readError, reset) => {
+            const err = readError();
             const message = getErrorMessage(err);
             if (!isExpectedBackstackError(message) && !loggedUnexpectedErrors.has(message)) {
               loggedUnexpectedErrors.add(message);

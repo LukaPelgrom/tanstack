@@ -1,4 +1,4 @@
-import { createErrorBoundary, createComponent } from 'solid-js'
+import { Errored, createComponent } from 'solid-js'
 import { render } from '@nativescript-community/solid-js'
 import { document } from 'dominative'
 import { RouterContextProvider, type AnyRouter } from './native-solid-router'
@@ -11,17 +11,6 @@ import { createDebugLogger } from './debug-log'
 import { describeComponentShape, normalizeRenderableComponent } from './component-shape'
 import { shouldUnmountPageOnNavigatingFrom } from './page-lifecycle'
 import { NavigatedData } from '@nativescript/core'
-
-function ErrorBoundary(props: {
-  fallback: (error: unknown, reset: () => void) => unknown
-  children: unknown
-}) {
-  const content = createErrorBoundary(
-    () => props.children,
-    (error, reset) => props.fallback(error(), reset),
-  )
-  return content()
-}
 
 function getErrorMessage(err: unknown): string {
   if (err instanceof Error) {
@@ -75,8 +64,8 @@ export function renderPage(
       return
     }
 
-    if (typeof ErrorBoundary !== 'function') {
-      console.error('[NSRouter] Invalid ErrorBoundary export:', describeComponentShape(ErrorBoundary))
+    if (typeof Errored !== 'function') {
+      console.error('[NSRouter] Invalid Errored export:', describeComponentShape(Errored))
       return
     }
 
@@ -111,8 +100,9 @@ export function renderPage(
         createComponent(RouterContextProvider, {
           router,
           children: () =>
-            createComponent(ErrorBoundary as any, {
-              fallback: (err: unknown, reset: () => void) => {
+            createComponent(Errored, {
+              fallback: (readError: () => unknown, reset: () => void) => {
+                const err = readError()
                 const message = getErrorMessage(err)
 
                 // Backstack pages can briefly evaluate stale route hooks while hidden.
